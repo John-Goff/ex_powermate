@@ -1,0 +1,4 @@
+%{
+  "alcove": {:git, "https://github.com/msantos/alcove.git", "8babb908c0f5801942814aa083b88a7804729520", [branch: "master"]},
+  "prx": {:git, "https://github.com/msantos/prx.git", "ac037f47e47a6bb6d5b287180a6ed439cc38783a", [branch: "master"]},
+}

@@ -2,6 +2,15 @@ defmodule ExPowermate do
   @moduledoc """
   Documentation for ExPowermate.
   """
+  @behaviour :gen_statem
+
+  @server_name :powermate_statem
+
+  ## Module API
+
+  def start, do: :gen_statem.start({:local, @server_name}, __MODULE__, [], [])
+
+  def stop, do: :gen_statem.stop(@server_name)
 
   def open_device(filename \\ nil) do
     with {:fork, {:ok, pid}} <- {:fork, :prx.fork()},

@@ -2,43 +2,30 @@ defmodule ExPowermate do
   @moduledoc """
   Documentation for ExPowermate.
   """
-  alias ExPowermate.Event
+  use GenServer
+  alias ExPowermate.PowerMate
 
-  defstruct [:pid, :file]
-
-  def open_device(filename \\ nil) do
-    with {:fork, {:ok, pid}} <- {:fork, :prx.fork()},
-         {:open, {:ok, fd}} <- {:open, :prx.open(pid, filename, [:o_rdwr])},
-         {:ioctl, {:ok, %{arg: arg}}} <- {:ioctl, :prx.ioctl(pid, fd, 0x80ff4506, String.duplicate(<<0>>, 256))} do
-      name = String.trim_trailing(arg, <<0>>)
-      if name == "Griffin PowerMate" or name == "Griffin SoundKnob" do
-        :prx.fcntl(pid, fd, :f_setfl, 2048) # 2048 == O_NDELAY
-        %ExPowermate{pid: pid, file: fd}
-      else
-        :prx.close(pid, fd)
-        {:err, "Wrong device"}
-      end
+  @impl true
+  def init(state) do
+    pm = File.ls!("/dev/input")
+    |> Enum.filter(&String.starts_with?(&1, "event"))
+    |> Enum.map(&PowerMate.open_device/1)
+    |> Enum.find(&PowerMate.is_valid?/1)
+    if is_nil(pm) do
+      {:stop, "Could not open PowerMate"}
     else
-      {:fork, _} -> {:err, "Could not fork"}
-      {:open, _} -> {:err, "Could not open! path: #{filename}"}
-      {:ioctl, _} -> {:err, "Improper ioctl call"}
+      {:ok, {pm, state}}
     end
   end
 
-  @spec wait_for_event(timeout :: integer()) :: Event.t()
-  def wait_for_event(%ExPowermate{pid: pid, file: file}, timeout \\ 10) do
-    {:ok, _, _, _} = :prx.select(pid, [file], [], [], %{sec: timeout})
-    :prx.read(pid, file, 24 * 32)
+  @impl true
+  def handle_call(:next_event, _from, {pm, [next | events]}) do
+    {:reply, next, {pm, events}}
   end
 
-  def struct_size do
-    command = ~s|python -c "import struct; print struct.calcsize('@llHHi')"|
-    pid = Port.open({:spawn, command}, [:binary])
-    receive do
-      {_, {:data, size}} ->
-        {int_size, _rem} = Integer.parse(size)
-        int_size
-      other -> other
-    end
+  @impl true
+  def handle_call(:next_event, _from, {pm, []}) do
+    [next | events] = PowerMate.read_event(pm)
+    {:reply, next, {pm, events}}
   end
 end

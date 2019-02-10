@@ -2,15 +2,9 @@ defmodule ExPowermate do
   @moduledoc """
   Documentation for ExPowermate.
   """
-  @behaviour :gen_statem
+  alias ExPowermate.Event
 
-  @server_name :powermate_statem
-
-  ## Module API
-
-  def start, do: :gen_statem.start({:local, @server_name}, __MODULE__, [], [])
-
-  def stop, do: :gen_statem.stop(@server_name)
+  defstruct [:pid, :file]
 
   def open_device(filename \\ nil) do
     with {:fork, {:ok, pid}} <- {:fork, :prx.fork()},
@@ -19,7 +13,7 @@ defmodule ExPowermate do
       name = String.trim_trailing(arg, <<0>>)
       if name == "Griffin PowerMate" or name == "Griffin SoundKnob" do
         :prx.fcntl(pid, fd, :f_setfl, 2048) # 2048 == O_NDELAY
-        {:ok, pid, fd}
+        %ExPowermate{pid: pid, file: fd}
       else
         :prx.close(pid, fd)
         {:err, "Wrong device"}
@@ -28,6 +22,23 @@ defmodule ExPowermate do
       {:fork, _} -> {:err, "Could not fork"}
       {:open, _} -> {:err, "Could not open! path: #{filename}"}
       {:ioctl, _} -> {:err, "Improper ioctl call"}
+    end
+  end
+
+  @spec wait_for_event(timeout :: integer()) :: Event.t()
+  def wait_for_event(%ExPowermate{pid: pid, file: file}, timeout \\ 10) do
+    {:ok, _, _, _} = :prx.select(pid, [file], [], [], %{sec: timeout})
+    :prx.read(pid, file, 24 * 32)
+  end
+
+  def struct_size do
+    command = ~s|python -c "import struct; print struct.calcsize('@llHHi')"|
+    pid = Port.open({:spawn, command}, [:binary])
+    receive do
+      {_, {:data, size}} ->
+        {int_size, _rem} = Integer.parse(size)
+        int_size
+      other -> other
     end
   end
 end

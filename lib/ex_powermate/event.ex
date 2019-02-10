@@ -4,12 +4,12 @@ defmodule ExPowermate.Event do
   defstruct [:seconds, :microseconds, :type, :code, :value]
 
   @type t() :: %__MODULE__{
-    seconds: any(),
-    microseconds: any(),
-    type: any(),
-    code: any(),
-    value: any()
-  }
+          seconds: any(),
+          microseconds: any(),
+          type: any(),
+          code: any(),
+          value: any()
+        }
 
   @doc """
   Turns a binary into a proper event
@@ -24,8 +24,9 @@ defmodule ExPowermate.Event do
       microseconds::size(64),
       type::size(16),
       code::size(16),
-      value::size(32),
+      value::size(32)
     >> = binary
+
     %Event{seconds: seconds, microseconds: microseconds, type: type, code: code, value: value}
   end
 end

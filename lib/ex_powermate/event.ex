@@ -20,13 +20,19 @@ defmodule ExPowermate.Event do
   @spec parse_event(binary()) :: t()
   def parse_event(binary) do
     <<
-      seconds::size(64),
-      microseconds::size(64),
-      type::size(16),
-      code::size(16),
-      value::size(32)
+      seconds::native-integer-size(64),
+      microseconds::native-integer-size(64),
+      type::native-integer-size(16),
+      code::native-integer-size(16),
+      value::signed-native-integer-size(32)
     >> = binary
 
     %Event{seconds: seconds, microseconds: microseconds, type: type, code: code, value: value}
+  end
+end
+
+defimpl Inspect, for: ExPowermate.Event do
+  def inspect(%ExPowermate.Event{seconds: s, microseconds: m, type: t, code: c, value: v}, _opts) do
+    "(#{s}, #{m}, #{t}, #{c}, #{v})"
   end
 end

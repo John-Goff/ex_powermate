@@ -7,6 +7,13 @@ defmodule ExPowermate.MixProject do
       version: "0.1.0",
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
+      description: "Tools for working with the Griffin PowerMate in Linux with Elixir",
+      package: [
+        name: "ex_powermate",
+        licenses: ["MIT"],
+        links: %{"GitHub" => "https://github.com/John-Goff/ex_powermate"}
+      ],
+      source_url: "https://github.com/John-Goff/ex_powermate",
       deps: deps()
     ]
   end

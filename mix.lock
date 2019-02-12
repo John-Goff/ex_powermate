@@ -6,4 +6,5 @@
   "makeup_elixir": {:hex, :makeup_elixir, "0.13.0", "be7a477997dcac2e48a9d695ec730b2d22418292675c75aa2d34ba0909dcdeda", [:mix], [{:makeup, "~> 0.8", [hex: :makeup, repo: "hexpm", optional: false]}], "hexpm"},
   "nimble_parsec": {:hex, :nimble_parsec, "0.5.0", "90e2eca3d0266e5c53f8fbe0079694740b9c91b6747f2b7e3c5d21966bba8300", [:mix], [], "hexpm"},
   "prx": {:git, "https://github.com/msantos/prx.git", "ac037f47e47a6bb6d5b287180a6ed439cc38783a", [branch: "master"]},
+  "rustler": {:hex, :rustler, "0.19.0", "cad56cba1d9cfc0c9453a2a95b3d5f4d039933c418a82e79f58e070778fc728f", [:mix], [], "hexpm"},
 }

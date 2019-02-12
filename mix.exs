@@ -28,6 +28,7 @@ defmodule ExPowermate.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:rustler, "~> 0.19"},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:prx, git: "https://github.com/msantos/prx.git", branch: "master"}
     ]

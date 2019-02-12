@@ -14,6 +14,8 @@ defmodule ExPowermate.MixProject do
         links: %{"GitHub" => "https://github.com/John-Goff/ex_powermate"}
       ],
       source_url: "https://github.com/John-Goff/ex_powermate",
+      compilers: [:rustler] ++ Mix.compilers(),
+      rustler_crates: rustler_crates(),
       deps: deps()
     ]
   end
@@ -30,7 +32,20 @@ defmodule ExPowermate.MixProject do
     [
       {:rustler, "~> 0.19"},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:bmark, "~> 1.0.0", only: :dev},
       {:prx, git: "https://github.com/msantos/prx.git", branch: "master"}
     ]
   end
+
+  defp rustler_crates do
+    [
+      c_struct_size: [
+        path: "native/c_struct_size",
+        mode: rustc_mode(Mix.env())
+      ]
+    ]
+  end
+
+  defp rustc_mode(:prod), do: :release
+  defp rustc_mode(_), do: :debug
 end

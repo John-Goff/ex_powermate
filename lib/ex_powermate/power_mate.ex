@@ -70,7 +70,7 @@ defmodule ExPowermate.PowerMate do
 
   # Checks the size of a C struct using python. Struct refers to the device mapping for
   # the Griffin PowerMate.
-  defp struct_size do
+  def struct_size do
     command = ~s|python -c "import struct; print struct.calcsize('@llHHi')"|
     Port.open({:spawn, command}, [:binary])
 

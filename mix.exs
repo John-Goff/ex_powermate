@@ -28,7 +28,7 @@ defmodule ExPowermate.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:prx, git: "https://github.com/msantos/prx.git", branch: "master"}
     ]
   end

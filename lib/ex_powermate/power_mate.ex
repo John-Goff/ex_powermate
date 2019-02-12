@@ -56,31 +56,16 @@ defmodule ExPowermate.PowerMate do
   """
   @spec read_event(t()) :: [Event.t(), ...] | [:timeout]
   def read_event(%PowerMate{pid: pid, file: file}) do
-    ssz = struct_size()
+    # only call NIF once
+    {:ok, size} = CStruct.struct_size()
 
-    case :prx.read(pid, file, struct_size() * 32) do
+    case :prx.read(pid, file, size * 32) do
       {:ok, binary} ->
-        for <<chunk::binary-size(ssz) <- binary>>,
-          do: Event.parse_event(<<chunk::binary-size(ssz)>>)
+        for <<chunk::binary-size(size) <- binary>>,
+          do: Event.parse_event(<<chunk::binary-size(size)>>)
 
       _ ->
         [:timeout]
-    end
-  end
-
-  # Checks the size of a C struct using python. Struct refers to the device mapping for
-  # the Griffin PowerMate.
-  def struct_size do
-    command = ~s|python -c "import struct; print struct.calcsize('@llHHi')"|
-    Port.open({:spawn, command}, [:binary])
-
-    receive do
-      {_, {:data, size}} ->
-        {int_size, _rem} = Integer.parse(size)
-        int_size
-
-      other ->
-        other
     end
   end
 end

@@ -2,7 +2,7 @@
 
 Tools for working with the Griffin Powermate in Linux with Elixir.
 
-Built on top of [`prx`](https://github.com/msantos/prx), this library allows you to work with
+Built on top of [`prx`](https://github.com/msantos/prx) and based on [this blog post](http://wirefall.dyndns.org/powermate.html) and accompanying python code, this library allows you to work with
 the Griffin PowerMate USB input knob. Unfortunately, this product is discontinued and not
 readily available, however, if you have one then they're pretty neat. Usefulness is
 limited only by the software available, which is why this library will hopefully expand

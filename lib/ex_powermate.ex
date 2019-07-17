@@ -39,7 +39,7 @@ defmodule ExPowermate do
   Returns an `ExPowermate.Event` struct representing the fired event. See
   `ExPowermate.Event` for more.
   """
-  def next_event(pid), do: GenServer.call(pid, :next_event, :infinity)
+  def next_event(pid, timeout \\ :infinity), do: GenServer.call(pid, :next_event, timeout)
 
   @doc """
   Starts an endless loop, printing all events that come in.

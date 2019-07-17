@@ -29,15 +29,9 @@ defmodule ExPowermate do
   alias ExPowermate.PowerMate
 
   @doc """
-  Same as `start_link([])`
-  """
-  def start_link, do: start_link([])
-
-  @doc """
   Starts GenServer and opens PowerMate.
   """
-  def start_link(events, opts \\ []) when is_list(events),
-    do: GenServer.start_link(__MODULE__, events, opts)
+  def start_link(opts \\ []), do: GenServer.start_link(__MODULE__, [], opts)
 
   @doc """
   Gets the next Event emitted by the PowerMate.

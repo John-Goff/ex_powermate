@@ -47,6 +47,9 @@ defmodule ExPowermate do
     end
   end
 
+  @doc """
+  Clears the list of pending events and returns any events that may be waiting.
+  """
   def next_events(pid), do: GenServer.call(pid, :next_events)
 
   @doc """

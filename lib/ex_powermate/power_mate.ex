@@ -76,6 +76,19 @@ defmodule ExPowermate.PowerMate do
     end
   end
 
+  def set_led(%PowerMate{pid: pid, file: file}) do
+  end
+
+  defp pack(sec, mic, typ, cod, val) do
+    <<
+      sec::native-integer-size(64),
+      mic::native-integer-size(64),
+      typ::native-integer-size(16),
+      cod::native-integer-size(16),
+      val::native-integer-size(32)
+    >>
+  end
+
   # Checks the size of a C struct using python. Struct refers to the device mapping for
   # the Griffin PowerMate.
   defp struct_size do

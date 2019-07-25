@@ -29,6 +29,17 @@ defmodule ExPowermate.Event do
 
     %Event{seconds: seconds, microseconds: microseconds, type: type, code: code, value: value}
   end
+
+  def event_type(%Event{type: 0}), do: :reset
+  def event_type(%Event{type: 1}), do: :press
+  def event_type(%Event{type: 2, value: v}) when v <= -1, do: :left_turn
+  def event_type(%Event{type: 2, value: v}) when v >= 1, do: :right_turn
+
+  def release?(%Event{type: 1, code: 256, value: 0}), do: true
+  def release?(%Event{}), do: false
+
+  def down_press?(%Event{type: 1, code: 256, value: 1}), do: true
+  def down_press?(%Event{}), do: false
 end
 
 defimpl Inspect, for: ExPowermate.Event do

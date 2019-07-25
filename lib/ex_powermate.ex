@@ -39,7 +39,13 @@ defmodule ExPowermate do
   Returns an `ExPowermate.Event` struct representing the fired event. See
   `ExPowermate.Event` for more.
   """
-  def next_event(pid, timeout \\ :infinity), do: GenServer.call(pid, :next_event, timeout)
+  def next_event(pid, timeout \\ :infinity) do
+    if is_atom(timeout) do
+      GenServer.call(pid, {:next_event, timeout}, timeout)
+    else
+      GenServer.call(pid, {:next_event, timeout}, timeout + 10)
+    end
+  end
 
   @doc """
   Starts an endless loop, printing all events that come in.
@@ -47,7 +53,7 @@ defmodule ExPowermate do
   Useful mainly for debugging and developing new applications.
   """
   def print_incoming_events(pid) do
-    IO.inspect(next_event(pid))
+    IO.inspect(next_event(pid, 1000))
     print_incoming_events(pid)
   end
 
@@ -69,16 +75,16 @@ defmodule ExPowermate do
 
   @doc false
   @impl true
-  def handle_call(:next_event, _from, {pm, [next | events]}) do
+  def handle_call({:next_event, _timeout}, _from, {pm, [next | events]}) do
     {:reply, next, {pm, events}}
   end
 
   @doc false
   @impl true
-  def handle_call(:next_event, _from, {pm, []}) do
+  def handle_call({:next_event, timeout}, _from, {pm, []}) do
     [next | events] =
       pm
-      |> PowerMate.wait_for_event()
+      |> PowerMate.wait_for_event(timeout)
       |> PowerMate.read_event()
 
     {:reply, next, {pm, events}}

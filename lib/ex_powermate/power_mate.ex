@@ -43,9 +43,17 @@ defmodule ExPowermate.PowerMate do
 
   Timeout defaults to ten seconds. Returns :ok when the device can be read from.
   """
-  @spec wait_for_event(pm :: t(), timeout :: integer()) :: t()
-  def wait_for_event(%PowerMate{pid: pid, file: file} = pm, timeout \\ 10) do
-    {:ok, _, _, _} = :prx.select(pid, [file], [], [], %{sec: timeout})
+  @spec wait_for_event(pm :: t(), timeout :: integer() | :infinity) :: t()
+  def wait_for_event(pm, timeout \\ 10000)
+
+  def wait_for_event(%PowerMate{pid: pid, file: file} = pm, :infinity) do
+    IO.puts("infinity")
+    {:ok, _, _, _} = :prx.select(pid, [file], [], [], 'NULL')
+    pm
+  end
+
+  def wait_for_event(%PowerMate{pid: pid, file: file} = pm, timeout) do
+    {:ok, _, _, _} = :prx.select(pid, [file], [], [], %{usec: timeout})
     pm
   end
 

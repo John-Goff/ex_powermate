@@ -47,6 +47,8 @@ defmodule ExPowermate do
     end
   end
 
+  def next_events(pid), do: GenServer.call(pid, :next_events)
+
   @doc """
   Starts an endless loop, printing all events that come in.
 
@@ -89,4 +91,8 @@ defmodule ExPowermate do
 
     {:reply, next, {pm, events}}
   end
+
+  @doc false
+  @impl true
+  def handle_call(:next_events, _from, {pm, events}), do: {:reply, events, {pm, []}}
 end

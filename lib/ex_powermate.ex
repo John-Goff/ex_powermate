@@ -53,6 +53,14 @@ defmodule ExPowermate do
   def next_events(pid), do: GenServer.call(pid, :next_events)
 
   @doc """
+  Sets the LED to a percentage out of 100
+  """
+  def set_led_percentage(pid, percent) when percent >= 0 and percent <= 100 do
+    brightness = percent / 100 * 255
+    GenServer.cast(pid, {:set_led, trunc(brightness)})
+  end
+
+  @doc """
   Starts an endless loop, printing all events that come in.
 
   Useful mainly for debugging and developing new applications.
@@ -98,4 +106,11 @@ defmodule ExPowermate do
   @doc false
   @impl true
   def handle_call(:next_events, _from, {pm, events}), do: {:reply, events, {pm, []}}
+
+  @doc false
+  @impl true
+  def handle_cast({:set_led, brightness}, {pm, events}) do
+    PowerMate.set_led(pm, brightness, 0, 0, 0, 0)
+    {:noreply, {pm, events}}
+  end
 end

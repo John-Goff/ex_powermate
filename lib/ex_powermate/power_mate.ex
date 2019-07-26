@@ -1,8 +1,9 @@
 defmodule ExPowermate.PowerMate do
+  use Bitwise
   alias ExPowermate.Event
   alias ExPowermate.PowerMate
 
-  defstruct [:pid, :file]
+  defstruct [:pid, :file, :path]
 
   @type t() :: %__MODULE__{
           pid: pid(),
@@ -26,7 +27,7 @@ defmodule ExPowermate.PowerMate do
       if name == "Griffin PowerMate" or name == "Griffin SoundKnob" do
         # 2048 == O_NDELAY
         :prx.fcntl(pid, fd, :f_setfl, 2048)
-        %PowerMate{pid: pid, file: fd}
+        %PowerMate{pid: pid, file: fd, path: filename}
       else
         :prx.close(pid, fd)
         {:err, "Wrong device"}
@@ -76,10 +77,97 @@ defmodule ExPowermate.PowerMate do
     end
   end
 
-  def set_led(%PowerMate{pid: pid, file: file}) do
+  def set_led(
+        %PowerMate{} = pm,
+        brightness,
+        pulse_speed,
+        pulse_table,
+        pulse_on_sleep,
+        pulse_on_wake
+      )
+      when brightness < 0 do
+    set_led(pm, 0, pulse_speed, pulse_table, pulse_on_sleep, pulse_on_wake)
   end
 
-  defp pack(sec, mic, typ, cod, val) do
+  def set_led(
+        %PowerMate{} = pm,
+        brightness,
+        pulse_speed,
+        pulse_table,
+        pulse_on_sleep,
+        pulse_on_wake
+      )
+      when brightness > 256 do
+    set_led(pm, 255, pulse_speed, pulse_table, pulse_on_sleep, pulse_on_wake)
+  end
+
+  def set_led(
+        %PowerMate{} = pm,
+        brightness,
+        pulse_speed,
+        pulse_table,
+        pulse_on_sleep,
+        pulse_on_wake
+      )
+      when pulse_speed < 0 do
+    set_led(pm, brightness, 0, pulse_table, pulse_on_sleep, pulse_on_wake)
+  end
+
+  def set_led(
+        %PowerMate{} = pm,
+        brightness,
+        pulse_speed,
+        pulse_table,
+        pulse_on_sleep,
+        pulse_on_wake
+      )
+      when pulse_speed > 510 do
+    set_led(pm, brightness, 510, pulse_table, pulse_on_sleep, pulse_on_wake)
+  end
+
+  def set_led(
+        %PowerMate{} = pm,
+        brightness,
+        pulse_speed,
+        pulse_table,
+        pulse_on_sleep,
+        pulse_on_wake
+      )
+      when pulse_table < 0 do
+    set_led(pm, brightness, pulse_speed, 0, pulse_on_sleep, pulse_on_wake)
+  end
+
+  def set_led(
+        %PowerMate{} = pm,
+        brightness,
+        pulse_speed,
+        pulse_table,
+        pulse_on_sleep,
+        pulse_on_wake
+      )
+      when pulse_table > 2 do
+    set_led(pm, brightness, pulse_speed, 2, pulse_on_sleep, pulse_on_wake)
+  end
+
+  def set_led(
+        %PowerMate{pid: parent, file: file},
+        brightness,
+        pulse_speed,
+        pulse_table,
+        pulse_on_sleep,
+        pulse_on_wake
+      ) do
+    magic_num =
+      brightness ||| pulse_speed <<< 8 ||| pulse_table <<< 17 ||| pulse_on_sleep <<< 19 |||
+        pulse_on_wake <<< 20
+
+    data = pack(0, 0, 4, 1, magic_num)
+
+    {:ok, pid} = :prx.fork(parent)
+    :prx.write(pid, file, data)
+  end
+
+  def pack(sec, mic, typ, cod, val) do
     <<
       sec::native-integer-size(64),
       mic::native-integer-size(64),

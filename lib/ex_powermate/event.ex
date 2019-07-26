@@ -42,6 +42,7 @@ defmodule ExPowermate.Event do
   def event_type(%Event{type: 1}), do: :press
   def event_type(%Event{type: 2, value: v}) when v <= -1, do: :left_turn
   def event_type(%Event{type: 2, value: v}) when v >= 1, do: :right_turn
+  def event_type(%Event{type: 4}), do: :led
 
   @doc """
   Checks if the powermate is currently pressed down.

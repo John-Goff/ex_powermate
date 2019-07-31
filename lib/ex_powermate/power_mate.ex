@@ -77,86 +77,13 @@ defmodule ExPowermate.PowerMate do
     end
   end
 
-  def set_led(
-        %PowerMate{} = pm,
-        brightness,
-        pulse_speed,
-        pulse_table,
-        pulse_on_sleep,
-        pulse_on_wake
-      )
-      when brightness < 0 do
-    set_led(pm, 0, pulse_speed, pulse_table, pulse_on_sleep, pulse_on_wake)
-  end
+  def set_led(%PowerMate{pid: parent, file: file}, b, p, t, s, w) do
+    brightness = brightness(b)
+    pulse_speed = pulse_speed(p)
+    pulse_table = pulse_table(t)
+    pulse_on_sleep = pulse_on_sleep(s)
+    pulse_on_wake = pulse_on_wake(w)
 
-  def set_led(
-        %PowerMate{} = pm,
-        brightness,
-        pulse_speed,
-        pulse_table,
-        pulse_on_sleep,
-        pulse_on_wake
-      )
-      when brightness > 256 do
-    set_led(pm, 255, pulse_speed, pulse_table, pulse_on_sleep, pulse_on_wake)
-  end
-
-  def set_led(
-        %PowerMate{} = pm,
-        brightness,
-        pulse_speed,
-        pulse_table,
-        pulse_on_sleep,
-        pulse_on_wake
-      )
-      when pulse_speed < 0 do
-    set_led(pm, brightness, 0, pulse_table, pulse_on_sleep, pulse_on_wake)
-  end
-
-  def set_led(
-        %PowerMate{} = pm,
-        brightness,
-        pulse_speed,
-        pulse_table,
-        pulse_on_sleep,
-        pulse_on_wake
-      )
-      when pulse_speed > 510 do
-    set_led(pm, brightness, 510, pulse_table, pulse_on_sleep, pulse_on_wake)
-  end
-
-  def set_led(
-        %PowerMate{} = pm,
-        brightness,
-        pulse_speed,
-        pulse_table,
-        pulse_on_sleep,
-        pulse_on_wake
-      )
-      when pulse_table < 0 do
-    set_led(pm, brightness, pulse_speed, 0, pulse_on_sleep, pulse_on_wake)
-  end
-
-  def set_led(
-        %PowerMate{} = pm,
-        brightness,
-        pulse_speed,
-        pulse_table,
-        pulse_on_sleep,
-        pulse_on_wake
-      )
-      when pulse_table > 2 do
-    set_led(pm, brightness, pulse_speed, 2, pulse_on_sleep, pulse_on_wake)
-  end
-
-  def set_led(
-        %PowerMate{pid: parent, file: file},
-        brightness,
-        pulse_speed,
-        pulse_table,
-        pulse_on_sleep,
-        pulse_on_wake
-      ) do
     magic_num =
       brightness ||| pulse_speed <<< 8 ||| pulse_table <<< 17 ||| pulse_on_sleep <<< 19 |||
         pulse_on_wake <<< 20
@@ -166,6 +93,24 @@ defmodule ExPowermate.PowerMate do
     {:ok, pid} = :prx.fork(parent)
     :prx.write(pid, file, data)
   end
+
+  defp brightness(b) when b < 0, do: 0
+  defp brightness(b) when b > 255, do: 255
+  defp brightness(b), do: b
+  defp pulse_speed(p) when p < 0, do: 0
+  defp pulse_speed(p) when p > 510, do: 510
+  defp pulse_speed(p), do: p
+  defp pulse_table(p) when p < 0, do: 0
+  defp pulse_table(p) when p > 510, do: 510
+  defp pulse_table(p), do: p
+  defp pulse_on_sleep(true), do: 1
+  defp pulse_on_sleep(false), do: 0
+  defp pulse_on_sleep(p) when p < 0, do: 0
+  defp pulse_on_sleep(p) when p > 1, do: 1
+  defp pulse_on_wake(true), do: 1
+  defp pulse_on_wake(false), do: 0
+  defp pulse_on_wake(p) when p < 0, do: 0
+  defp pulse_on_wake(p) when p > 1, do: 1
 
   def pack(sec, mic, typ, cod, val) do
     <<

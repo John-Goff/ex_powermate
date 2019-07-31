@@ -107,10 +107,12 @@ defmodule ExPowermate.PowerMate do
   defp pulse_on_sleep(false), do: 0
   defp pulse_on_sleep(p) when p < 0, do: 0
   defp pulse_on_sleep(p) when p > 1, do: 1
+  defp pulse_on_sleep(p), do: p
   defp pulse_on_wake(true), do: 1
   defp pulse_on_wake(false), do: 0
   defp pulse_on_wake(p) when p < 0, do: 0
   defp pulse_on_wake(p) when p > 1, do: 1
+  defp pulse_on_wake(p), do: p
 
   def pack(sec, mic, typ, cod, val) do
     <<

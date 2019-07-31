@@ -94,6 +94,20 @@ defmodule ExPowermate.Event do
   def down_press?(%Event{type: 1, code: 256, value: 1}), do: true
   def down_press?(%Event{}), do: false
 
+  def double_click?(history, ms \\ 400)
+
+  def double_click?([], _ms), do: false
+
+  def double_click?(history, ms) do
+    with [first | [second | _rest]] <- Enum.filter(history, fn e -> release?(e) end) do
+      t1 = (first.seconds * 1_000_000 + first.microseconds) / 1000
+      t2 = (second.seconds * 1_000_000 + second.microseconds) / 1000
+      IO.inspect(t1 - t2) <= ms
+    else
+      _ -> false
+    end
+  end
+
   @doc """
   Debounces an event to ensure it doesn't fire too rapidly when repeating.
   """

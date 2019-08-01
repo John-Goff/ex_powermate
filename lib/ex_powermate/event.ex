@@ -43,6 +43,7 @@ defmodule ExPowermate.Event do
   def event_type(%Event{type: 2, value: v}) when v <= -1, do: :left_turn
   def event_type(%Event{type: 2, value: v}) when v >= 1, do: :right_turn
   def event_type(%Event{type: 4}), do: :led
+  def event_type(_), do: :unknown
 
   @doc """
   Checks if the powermate is currently pressed down.
@@ -102,7 +103,7 @@ defmodule ExPowermate.Event do
     with [first | [second | _rest]] <- Enum.filter(history, fn e -> release?(e) end) do
       t1 = (first.seconds * 1_000_000 + first.microseconds) / 1000
       t2 = (second.seconds * 1_000_000 + second.microseconds) / 1000
-      IO.inspect(t1 - t2) <= ms
+      t1 - t2 <= ms
     else
       _ -> false
     end

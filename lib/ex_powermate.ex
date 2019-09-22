@@ -55,7 +55,10 @@ defmodule ExPowermate do
   @doc """
   Sets the LED to a percentage out of 100
   """
-  def set_led_percentage(pid, percent) when percent >= 0 and percent <= 100 do
+  def set_led_percentage(pid, percent) when percent < 0, do: set_led_percentage(pid, 0)
+  def set_led_percentage(pid, percent) when percent > 100, do: set_led_percentage(pid, 100)
+
+  def set_led_percentage(pid, percent) when is_integer(percent) do
     brightness = percent / 100 * 255
     GenServer.cast(pid, {:set_led, trunc(brightness)})
   end

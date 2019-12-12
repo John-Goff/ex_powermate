@@ -29,6 +29,8 @@ defmodule ExPowermate do
   require Logger
   alias ExPowermate.PowerMate
 
+  @reconnect_time 10_000
+
   @doc """
   Starts GenServer and opens PowerMate.
   """
@@ -91,7 +93,7 @@ defmodule ExPowermate do
   @impl true
   def handle_info(:powermate_closed, {_pm, state}) do
     Logger.info("PowerMate has been closed")
-    Process.send_after(self(), :after_join, 30_000)
+    Process.send_after(self(), :after_join, @reconnect_time)
     {:noreply, state}
   end
 
@@ -167,8 +169,8 @@ defmodule ExPowermate do
       |> Enum.find(&PowerMate.is_valid?/1)
 
     if is_nil(pm) do
-      Logger.info("Could not open PowerMate, retrying in 30s")
-      Process.send_after(self(), :after_join, 30_000)
+      Logger.info("Could not open PowerMate, retrying in #{@reconnect_time / 1000}s")
+      Process.send_after(self(), :after_join, @reconnect_time)
       {:noreply, state, :hibernate}
     else
       Logger.info("PowerMate found")

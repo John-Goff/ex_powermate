@@ -148,7 +148,11 @@ defmodule ExPowermate do
       [:timeout] ->
         timeout_time = System.monotonic_time(:millisecond)
 
-        if timeout_time - initial_time < timeout do
+        delta = timeout_time - initial_time
+
+        Logger.debug("time difference: #{delta}")
+
+        if delta < timeout do
           send(self(), :powermate_closed)
         end
 

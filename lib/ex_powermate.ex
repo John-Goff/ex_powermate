@@ -113,18 +113,18 @@ defmodule ExPowermate do
   @doc false
   @impl true
   def handle_call({:next_event, :infinity}, _from, {pm, []}) do
-    initial_time = System.monotonic_time(:millisecond)
+    [next | events] =
+      pm
+      |> PowerMate.wait_for_event(:infinity)
+      |> PowerMate.read_event()
 
-    pm
-    |> PowerMate.wait_for_event(:infinity)
-    |> PowerMate.read_event()
-    |> check_powermate_disconnected(pm, initial_time)
+    {:reply, next, {pm, events}}
   end
 
   @doc false
   @impl true
   def handle_call({:next_event, timeout}, _from, {pm, []}) when is_integer(timeout) do
-    initial_time = System.monotonic_time(:millisecond)
+    initial_time = System.monotonic_time(:microsecond)
 
     pm
     |> PowerMate.wait_for_event(timeout)
@@ -146,14 +146,11 @@ defmodule ExPowermate do
   defp check_powermate_disconnected(next_events, pm, initial_time, timeout \\ 100) do
     case next_events do
       [:timeout] ->
-        timeout_time = System.monotonic_time(:millisecond)
-
+        timeout_time = System.monotonic_time(:microsecond)
         delta = timeout_time - initial_time
 
-        Logger.debug("time difference: #{delta}")
-
         if delta < timeout do
-          send(self(), :powermate_closed)
+          Process.send_after(self(), :powermate_closed, 500)
         end
 
         {:reply, :timeout, {pm, []}}

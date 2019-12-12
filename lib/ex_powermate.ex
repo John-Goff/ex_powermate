@@ -84,20 +84,7 @@ defmodule ExPowermate do
   @doc false
   @impl true
   def handle_info(:after_join, state) do
-    pm =
-      File.ls!("/dev/input")
-      |> Enum.filter(&String.starts_with?(&1, "event"))
-      |> Enum.map(&PowerMate.open_device("/dev/input/" <> &1))
-      |> Enum.find(&PowerMate.is_valid?/1)
-
-    if is_nil(pm) do
-      Logger.info("Could not open PowerMate, retrying in 30s")
-      Process.send_after(self(), :after_join, 30_000)
-      {:noreply, state, :hibernate}
-    else
-      Logger.info("PowerMate found")
-      {:noreply, {pm, state}}
-    end
+    {:noreply, state, {:continue, :connect_powermate}}
   end
 
   @doc false
@@ -111,8 +98,8 @@ defmodule ExPowermate do
   @doc false
   @impl true
   def handle_call({:next_event, _timeout}, _from, state) when is_list(state) do
-    Logger.debug("Next event requested but no PowerMate is present")
-    {:reply, :no_powermate, state}
+    Logger.debug("Next event requested but no PowerMate is present, attempting to connect")
+    {:reply, :no_powermate, state, {:continue, :connect_powermate}}
   end
 
   @doc false
@@ -167,6 +154,25 @@ defmodule ExPowermate do
 
       [next | events] ->
         {:reply, next, {pm, events}}
+    end
+  end
+
+  @doc false
+  @impl true
+  def handle_continue(:connect_powermate, state) when is_list(state) do
+    pm =
+      File.ls!("/dev/input")
+      |> Enum.filter(&String.starts_with?(&1, "event"))
+      |> Enum.map(&PowerMate.open_device("/dev/input/" <> &1))
+      |> Enum.find(&PowerMate.is_valid?/1)
+
+    if is_nil(pm) do
+      Logger.info("Could not open PowerMate, retrying in 30s")
+      Process.send_after(self(), :after_join, 30_000)
+      {:noreply, state, :hibernate}
+    else
+      Logger.info("PowerMate found")
+      {:noreply, {pm, state}}
     end
   end
 end

@@ -1,5 +1,6 @@
 defmodule ExPowermate.PowerMate do
   use Bitwise
+  require Logger
   alias ExPowermate.Event
   alias ExPowermate.PowerMate
 

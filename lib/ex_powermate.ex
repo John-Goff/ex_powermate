@@ -102,6 +102,14 @@ defmodule ExPowermate do
 
   @doc false
   @impl true
+  def handle_info(:powermate_closed, {_pm, state}) do
+    Logger.info("PowerMate has been closed")
+    Process.send_after(self(), :after_join, 30_000)
+    {:noreply, state}
+  end
+
+  @doc false
+  @impl true
   def handle_call({:next_event, _timeout}, _from, state) when is_list(state) do
     Logger.debug("Next event requested but no PowerMate is present")
     {:reply, :no_powermate, state}
@@ -115,13 +123,24 @@ defmodule ExPowermate do
 
   @doc false
   @impl true
-  def handle_call({:next_event, timeout}, _from, {pm, []}) do
-    [next | events] =
-      pm
-      |> PowerMate.wait_for_event(timeout)
-      |> PowerMate.read_event()
+  def handle_call({:next_event, :infinity}, _from, {pm, []}) do
+    initial_time = System.monotonic_time(:millisecond)
 
-    {:reply, next, {pm, events}}
+    pm
+    |> PowerMate.wait_for_event(:infinity)
+    |> PowerMate.read_event()
+    |> check_powermate_disconnected(pm, initial_time)
+  end
+
+  @doc false
+  @impl true
+  def handle_call({:next_event, timeout}, _from, {pm, []}) when is_integer(timeout) do
+    initial_time = System.monotonic_time(:millisecond)
+
+    pm
+    |> PowerMate.wait_for_event(timeout)
+    |> PowerMate.read_event()
+    |> check_powermate_disconnected(pm, initial_time, timeout)
   end
 
   @doc false
@@ -133,5 +152,21 @@ defmodule ExPowermate do
   def handle_cast({:set_led, brightness}, {pm, events}) do
     PowerMate.set_led(pm, brightness, 0, 0, 0, 0)
     {:noreply, {pm, events}}
+  end
+
+  defp check_powermate_disconnected(next_events, pm, initial_time, timeout \\ 100) do
+    case next_events do
+      [:timeout] ->
+        timeout_time = System.monotonic_time(:millisecond)
+
+        if timeout_time - initial_time < timeout do
+          send(self(), :powermate_closed)
+        end
+
+        {:reply, :timeout, {pm, []}}
+
+      [next | events] ->
+        {:reply, next, {pm, events}}
+    end
   end
 end

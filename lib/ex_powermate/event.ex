@@ -90,10 +90,10 @@ defmodule ExPowermate.Event do
   end
 
   def release?(%Event{type: 1, code: 256, value: 0}), do: true
-  def release?(%Event{}), do: false
+  def release?(_), do: false
 
   def down_press?(%Event{type: 1, code: 256, value: 1}), do: true
-  def down_press?(%Event{}), do: false
+  def down_press?(_), do: false
 
   def double_click?(history, ms \\ 400)
 

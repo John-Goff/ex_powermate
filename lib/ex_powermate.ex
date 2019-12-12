@@ -26,6 +26,7 @@ defmodule ExPowermate do
   I hope this inspires someone to write some software for the PowerMate.
   """
   use GenServer
+  require Logger
   alias ExPowermate.PowerMate
 
   @doc """
@@ -43,7 +44,7 @@ defmodule ExPowermate do
     if is_atom(timeout) do
       GenServer.call(pid, {:next_event, timeout}, timeout)
     else
-      GenServer.call(pid, {:next_event, timeout}, timeout + 10)
+      GenServer.call(pid, {:next_event, timeout})
     end
   end
 
@@ -75,7 +76,14 @@ defmodule ExPowermate do
 
   @doc false
   @impl true
-  def init(state) do
+  def init(state) when is_list(state) do
+    send(self(), :after_join)
+    {:ok, state}
+  end
+
+  @doc false
+  @impl true
+  def handle_info(:after_join, state) do
     pm =
       File.ls!("/dev/input")
       |> Enum.filter(&String.starts_with?(&1, "event"))
@@ -83,10 +91,20 @@ defmodule ExPowermate do
       |> Enum.find(&PowerMate.is_valid?/1)
 
     if is_nil(pm) do
-      {:stop, "Could not open PowerMate"}
+      Logger.info("Could not open PowerMate, retrying in 30s")
+      Process.send_after(self(), :after_join, 30_000)
+      {:noreply, state, :hibernate}
     else
-      {:ok, {pm, state}}
+      Logger.info("PowerMate found")
+      {:noreply, {pm, state}}
     end
+  end
+
+  @doc false
+  @impl true
+  def handle_call({:next_event, _timeout}, _from, state) when is_list(state) do
+    Logger.debug("Next event requested but no PowerMate is present")
+    {:reply, :no_powermate, state}
   end
 
   @doc false

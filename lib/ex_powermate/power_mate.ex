@@ -48,8 +48,7 @@ defmodule ExPowermate.PowerMate do
   def wait_for_event(pm, timeout \\ 10000)
 
   def wait_for_event(%PowerMate{pid: pid, file: file} = pm, :infinity) do
-    IO.puts("infinity")
-    {:ok, _, _, _} = :prx.select(pid, [file], [], [], 'NULL')
+    {:ok, _, _, _} = :prx.select(pid, [file], [], [], :null)
     pm
   end
 

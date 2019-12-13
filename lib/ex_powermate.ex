@@ -91,10 +91,10 @@ defmodule ExPowermate do
 
   @doc false
   @impl true
-  def handle_info(:powermate_closed, {_pm, state}) do
+  def handle_info(:powermate_closed, _state) do
     Logger.info("PowerMate has been closed")
     Process.send_after(self(), :after_join, @reconnect_time)
-    {:noreply, state}
+    {:noreply, []}
   end
 
   @doc false
@@ -143,11 +143,14 @@ defmodule ExPowermate do
     {:noreply, {pm, events}}
   end
 
-  defp check_powermate_disconnected(next_events, pm, initial_time, timeout \\ 100) do
+  defp check_powermate_disconnected(next_events, pm, initial_time, timeout) do
     case next_events do
       [:timeout] ->
         timeout_time = System.monotonic_time(:microsecond)
         delta = timeout_time - initial_time
+
+        Logger.debug("Delta: #{delta}")
+        Logger.debug("Timeout: #{timeout}")
 
         if delta < timeout do
           Process.send_after(self(), :powermate_closed, 500)

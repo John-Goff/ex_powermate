@@ -27,7 +27,7 @@ defmodule ExPowermate do
   """
   use GenServer
   require Logger
-  alias ExPowermate.PowerMate
+  alias ExPowermate.Device
 
   @reconnect_time 10_000
 
@@ -115,8 +115,8 @@ defmodule ExPowermate do
   def handle_call({:next_event, :infinity}, _from, {pm, []}) do
     [next | events] =
       pm
-      |> PowerMate.wait_for_event(:infinity)
-      |> PowerMate.read_event()
+      |> Device.wait_for_event(:infinity)
+      |> Device.read_event()
 
     {:reply, next, {pm, events}}
   end
@@ -127,8 +127,8 @@ defmodule ExPowermate do
     initial_time = System.monotonic_time(:microsecond)
 
     pm
-    |> PowerMate.wait_for_event(timeout)
-    |> PowerMate.read_event()
+    |> Device.wait_for_event(timeout)
+    |> Device.read_event()
     |> check_powermate_disconnected(pm, initial_time, timeout)
   end
 
@@ -139,7 +139,7 @@ defmodule ExPowermate do
   @doc false
   @impl true
   def handle_cast({:set_led, brightness}, {pm, events}) do
-    PowerMate.set_led(pm, brightness, 0, 0, 0, 0)
+    Device.set_led(pm, brightness, 0, 0, 0, 0)
     {:noreply, {pm, events}}
   end
 
@@ -169,8 +169,8 @@ defmodule ExPowermate do
     pm =
       File.ls!("/dev/input")
       |> Enum.filter(&String.starts_with?(&1, "event"))
-      |> Enum.map(&PowerMate.open_device("/dev/input/" <> &1))
-      |> Enum.find(&PowerMate.is_valid?/1)
+      |> Enum.map(&Device.open_device("/dev/input/" <> &1))
+      |> Enum.find(&Device.is_valid?/1)
 
     if is_nil(pm) do
       Logger.info("Could not open PowerMate, retrying in #{@reconnect_time / 1000}s")

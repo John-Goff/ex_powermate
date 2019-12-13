@@ -1,8 +1,8 @@
-defmodule ExPowermate.PowerMate do
+defmodule ExPowermate.Device do
   use Bitwise
   require Logger
   alias ExPowermate.Event
-  alias ExPowermate.PowerMate
+  alias ExPowermate.Device
 
   defstruct [:pid, :file, :path]
 
@@ -11,7 +11,7 @@ defmodule ExPowermate.PowerMate do
           file: integer()
         }
 
-  def is_valid?(%PowerMate{pid: pid, file: file}) when is_pid(pid) and is_integer(file), do: true
+  def is_valid?(%Device{pid: pid, file: file}) when is_pid(pid) and is_integer(file), do: true
   def is_valid?(_), do: false
 
   @doc """
@@ -28,7 +28,7 @@ defmodule ExPowermate.PowerMate do
       if name == "Griffin PowerMate" or name == "Griffin SoundKnob" do
         # 2048 == O_NDELAY
         :prx.fcntl(pid, fd, :f_setfl, 2048)
-        %PowerMate{pid: pid, file: fd, path: filename}
+        %Device{pid: pid, file: fd, path: filename}
       else
         :prx.close(pid, fd)
         {:err, "Wrong device"}
@@ -48,12 +48,12 @@ defmodule ExPowermate.PowerMate do
   @spec wait_for_event(pm :: t(), timeout :: integer() | :infinity) :: t()
   def wait_for_event(pm, timeout \\ 10_000)
 
-  def wait_for_event(%PowerMate{pid: pid, file: file} = pm, :infinity) do
+  def wait_for_event(%Device{pid: pid, file: file} = pm, :infinity) do
     {:ok, _, _, _} = :prx.select(pid, [file], [], [], :null)
     pm
   end
 
-  def wait_for_event(%PowerMate{pid: pid, file: file} = pm, timeout) do
+  def wait_for_event(%Device{pid: pid, file: file} = pm, timeout) do
     {:ok, _, _, _} = :prx.select(pid, [file], [], [], %{usec: timeout})
     pm
   end
@@ -64,7 +64,7 @@ defmodule ExPowermate.PowerMate do
   Returns [:timeout] if no event could be read from the device.
   """
   @spec read_event(t()) :: [Event.t(), ...] | [:timeout]
-  def read_event(%PowerMate{pid: pid, file: file}) do
+  def read_event(%Device{pid: pid, file: file}) do
     ssz = struct_size()
 
     case :prx.read(pid, file, ssz * 32) do
@@ -77,7 +77,7 @@ defmodule ExPowermate.PowerMate do
     end
   end
 
-  def set_led(%PowerMate{pid: parent, file: file}, b, p, t, s, w) do
+  def set_led(%Device{pid: parent, file: file}, b, p, t, s, w) do
     brightness = brightness(b)
     pulse_speed = pulse_speed(p)
     pulse_table = pulse_table(t)

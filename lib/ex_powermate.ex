@@ -72,7 +72,12 @@ defmodule ExPowermate do
   Useful mainly for debugging and developing new applications.
   """
   def print_incoming_events(pid) do
-    IO.inspect(next_event(pid, 1000))
+    event = next_event(pid, 1_000_000)
+
+    if event != :no_powermate do
+      IO.inspect(event)
+    end
+
     print_incoming_events(pid)
   end
 
@@ -93,8 +98,13 @@ defmodule ExPowermate do
   @impl true
   def handle_info(:powermate_closed, _state) do
     Logger.info("PowerMate has been closed")
-    Process.send_after(self(), :after_join, @reconnect_time)
-    {:noreply, []}
+    {:noreply, [], {:continue, :connect_powermate}}
+  end
+
+  @doc false
+  @impl true
+  def handle_call({:next_event, _timeout}, _from, :disconnected) do
+    {:reply, :no_powermate, :disconnected}
   end
 
   @doc false
@@ -134,7 +144,9 @@ defmodule ExPowermate do
 
   @doc false
   @impl true
-  def handle_continue(:connect_powermate, state) when is_list(state) do
+  def handle_continue(:connect_powermate, {%Device{} = pm, events}), do: {:noreply, {pm, events}}
+
+  def handle_continue(:connect_powermate, _state) do
     pm =
       File.ls!("/dev/input")
       |> Enum.filter(&String.starts_with?(&1, "event"))
@@ -144,10 +156,10 @@ defmodule ExPowermate do
     if is_nil(pm) do
       Logger.info("Could not open PowerMate, retrying in #{@reconnect_time / 1000}s")
       Process.send_after(self(), :after_join, @reconnect_time)
-      {:noreply, state, :hibernate}
+      {:noreply, :disconnected, :hibernate}
     else
       Logger.info("PowerMate found")
-      {:noreply, {pm, state}}
+      {:noreply, {pm, []}}
     end
   end
 end

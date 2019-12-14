@@ -112,24 +112,13 @@ defmodule ExPowermate do
 
   @doc false
   @impl true
-  def handle_call({:next_event, :infinity}, _from, {pm, []}) do
+  def handle_call({:next_event, timeout}, _from, {pm, []}) do
     [next | events] =
       pm
-      |> Device.wait_for_event(:infinity)
+      |> Device.wait_for_event(timeout)
       |> Device.read_event()
 
     {:reply, next, {pm, events}}
-  end
-
-  @doc false
-  @impl true
-  def handle_call({:next_event, timeout}, _from, {pm, []}) when is_integer(timeout) do
-    initial_time = System.monotonic_time(:microsecond)
-
-    pm
-    |> Device.wait_for_event(timeout)
-    |> Device.read_event()
-    |> check_powermate_disconnected(pm, initial_time, timeout)
   end
 
   @doc false
@@ -141,26 +130,6 @@ defmodule ExPowermate do
   def handle_cast({:set_led, brightness}, {pm, events}) do
     Device.set_led(pm, brightness, 0, 0, 0, 0)
     {:noreply, {pm, events}}
-  end
-
-  defp check_powermate_disconnected(next_events, pm, initial_time, timeout) do
-    case next_events do
-      [:timeout] ->
-        timeout_time = System.monotonic_time(:microsecond)
-        delta = timeout_time - initial_time
-
-        Logger.debug("Delta: #{delta}")
-        Logger.debug("Timeout: #{timeout}")
-
-        if delta < timeout do
-          Process.send_after(self(), :powermate_closed, 500)
-        end
-
-        {:reply, :timeout, {pm, []}}
-
-      [next | events] ->
-        {:reply, next, {pm, events}}
-    end
   end
 
   @doc false

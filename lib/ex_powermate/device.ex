@@ -3,6 +3,7 @@ defmodule ExPowermate.Device do
   require Logger
   alias ExPowermate.Event
   alias ExPowermate.Device
+  alias ExPowermate.IOCTL
 
   defstruct [:pid, :file, :path]
 
@@ -22,7 +23,7 @@ defmodule ExPowermate.Device do
     with {:fork, {:ok, pid}} <- {:fork, :prx.fork()},
          {:open, {:ok, fd}} <- {:open, :prx.open(pid, filename, [:o_rdwr])},
          {:ioctl, {:ok, %{arg: arg}}} <-
-           {:ioctl, :prx.ioctl(pid, fd, 0x80FF4506, String.duplicate(<<0>>, 256))} do
+           {:ioctl, :prx.ioctl(pid, fd, IOCTL.name(), String.duplicate(<<0>>, 256))} do
       name = String.trim_trailing(arg, <<0>>)
 
       if name == "Griffin PowerMate" or name == "Griffin SoundKnob" do
@@ -71,6 +72,10 @@ defmodule ExPowermate.Device do
       {:ok, binary} ->
         for <<chunk::binary-size(ssz) <- binary>>,
           do: Event.parse_event(<<chunk::binary-size(ssz)>>)
+
+      {:error, :enodev} ->
+        send(self(), :powermate_closed)
+        [:timeout]
 
       _ ->
         [:timeout]

@@ -144,6 +144,12 @@ defmodule ExPowermate do
 
   @doc false
   @impl true
+  def handle_cast({:set_led, brightness}, :disconnected) do
+    {:noreply, :disconnected}
+  end
+
+  @doc false
+  @impl true
   def handle_continue(:connect_powermate, {%Device{} = pm, events}), do: {:noreply, {pm, events}}
 
   def handle_continue(:connect_powermate, _state) do

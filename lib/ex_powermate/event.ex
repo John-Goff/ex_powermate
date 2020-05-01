@@ -1,4 +1,5 @@
 defmodule ExPowermate.Event do
+  require Logger
   alias ExPowermate.Event
 
   defstruct [:seconds, :microseconds, :type, :code, :value]
@@ -100,13 +101,14 @@ defmodule ExPowermate.Event do
   def double_click?([], _ms), do: false
 
   def double_click?(history, ms) do
-    with [first | [second | _rest]] <- Enum.filter(history, fn e -> release?(e) end) do
-      t1 = (first.seconds * 1_000_000 + first.microseconds) / 1000
-      t2 = (second.seconds * 1_000_000 + second.microseconds) / 1000
-      t1 - t2 <= ms
-    else
-      _ -> false
-    end
+    events =
+      Enum.filter(history, fn e ->
+        time = System.system_time(:millisecond)
+        t1 = div(e.seconds * 1_000_000 + e.microseconds, 1000)
+        time - t1 <= ms and release?(e)
+      end)
+
+    length(events) > 4
   end
 
   @doc """

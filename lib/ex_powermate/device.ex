@@ -35,9 +35,9 @@ defmodule ExPowermate.Device do
         {:err, "Wrong device"}
       end
     else
-      {:fork, _} -> {:err, "Could not fork"}
-      {:open, _} -> {:err, "Could not open! path: #{filename}"}
-      {:ioctl, _} -> {:err, "Improper ioctl call"}
+      {:fork, err} -> {:err, "Could not fork, #{inspect(err)}"}
+      {:open, err} -> {:err, "Could not open! path: #{filename}, #{inspect(err)}"}
+      {:ioctl, err} -> {:err, "Improper ioctl call, #{inspect(err)}"}
     end
   end
 

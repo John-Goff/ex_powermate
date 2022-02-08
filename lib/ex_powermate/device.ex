@@ -133,7 +133,7 @@ defmodule ExPowermate.Device do
   # the Griffin PowerMate.
   defp struct_size do
     {res, _rem} =
-      ~s|python -c "import struct; print struct.calcsize('@llHHi')"|
+      ~s|python3 -c "import struct; print(struct.calcsize('@llHHi'))"|
       |> to_charlist()
       |> :os.cmd()
       |> to_string()
